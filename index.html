@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <!-- Mobile first -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
   <meta name="theme-color" content="#0b1b12" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Jungle Runner" />
   <title>Jungle Runner</title>
+
   <style>
     :root{
       --bg:#0b1b12;
@@ -36,7 +36,6 @@
       overscroll-behavior: none;
     }
 
-    /* Fullscreen-ish game layout */
     .wrap{
       width: 100%;
       max-width: 980px;
@@ -44,12 +43,11 @@
       display: flex;
       flex-direction: column;
       gap: 8px;
-      padding-bottom: 104px; /* space for controls on mobile */
+      padding-bottom: 104px;
       box-sizing: border-box;
     }
 
     canvas{
-      /* canvas internal res handled in JS, this is display size */
       width: 100%;
       height: auto;
       max-height: calc(100vh - 160px);
@@ -95,7 +93,6 @@
       font-size: 12px;
     }
 
-    /* On-screen controls (mobile) */
     .controls {
       position: fixed;
       left: 0; right: 0;
@@ -142,7 +139,6 @@
 
 <body>
   <div class="wrap">
-    <!-- Logical resolution is controlled in JS; keep this tag simple -->
     <canvas id="game"></canvas>
 
     <div class="hud">
@@ -156,7 +152,6 @@
     </div>
   </div>
 
-  <!-- On-screen controls (mobile) -->
   <div class="controls" id="controls">
     <div class="pad">
       <div class="btn" id="btnLeft">◀</div>
@@ -167,27 +162,17 @@
 
 <script>
 (() => {
-  // ---------------------------------------------------
-  // Mobile-friendly, single-file canvas game
-  // - Responsive canvas sizing
-  // - High-DPI crisp rendering
-  // - Touch controls
-  // ---------------------------------------------------
-
   const canvas = document.getElementById("game");
   const ctx = canvas.getContext("2d", { alpha: true });
   const statusText = document.getElementById("statusText");
 
-  // === Logical game resolution (do NOT change game math) ===
   const LOGICAL_W = 960;
   const LOGICAL_H = 540;
 
-  // Fit canvas into viewport (mobile first)
   function resizeCanvas() {
     const dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
-
-    // Reserve vertical space for HUD + mobile controls
     const reserveBottom = 170;
+
     const availW = Math.max(320, window.innerWidth - 16);
     const availH = Math.max(420, window.innerHeight - reserveBottom);
 
@@ -200,15 +185,12 @@
       cssW = cssH * ratio;
     }
 
-    // Apply CSS size
     canvas.style.width = cssW + "px";
     canvas.style.height = cssH + "px";
 
-    // Apply internal pixel size for crispness
     canvas.width = Math.floor(cssW * dpr);
     canvas.height = Math.floor(cssH * dpr);
 
-    // Map logical coordinates (960x540) to actual pixels
     ctx.setTransform(canvas.width / LOGICAL_W, 0, 0, canvas.height / LOGICAL_H, 0, 0);
   }
 
@@ -216,25 +198,17 @@
   window.addEventListener("orientationchange", resizeCanvas, { passive: true });
   resizeCanvas();
 
-  // Use logical dimensions for all game math/draw
   const W = LOGICAL_W, H = LOGICAL_H;
   const groundY = Math.floor(H * 0.78);
 
-  // Physics
   const gravity = 2200;
   const jumpV = 820;
   const doubleJumpV = 760;
 
-  // Bounce strengths
   const BOUNCE = { lion: 980, tiger: 860, rabbit: 760, bear: 920, dino: 940 };
-
-  // Score values
-  const SCORE = { rabbit: 10, lion: 20, bear: 30, dino: 40, tiger: 50 };
-
-  // Round targets
+  const SCORE  = { rabbit: 10, lion: 20, bear: 30, dino: 40, tiger: 50 };
   const ROUND_TARGET = { 1: 200, 2: 500, 3: 1000 };
 
-  // Player
   const player = {
     x: Math.floor(W * 0.18),
     y: groundY,
@@ -243,14 +217,11 @@
     vy: 0,
     onGround: true,
     jumpsLeft: 2,
-    alive: true,
     crown: false
   };
 
-  // Horizontal movement
-  const playerMoveSpeed = 420; // px/s
+  const playerMoveSpeed = 420;
 
-  // Game state
   let running = false, gameOver = false, win = false;
   let lastTs = 0;
   let baseSpeed = 360;
@@ -265,7 +236,6 @@
   let idSeq = 1;
   let nextSpawnIn = 0.8;
 
-  // Input
   const keys = { left:false, right:false, space:false };
 
   window.addEventListener("keydown", (e) => {
@@ -287,7 +257,6 @@
     if (e.code === "Space") keys.space = false;
   });
 
-  // Touch controls
   function bindHoldButton(el, onDown, onUp){
     const down = (e)=>{ e.preventDefault(); onDown(); };
     const up   = (e)=>{ e.preventDefault(); onUp(); };
@@ -297,9 +266,9 @@
     el.addEventListener("pointerout", up, { passive:false });
   }
 
-  const btnLeft = document.getElementById("btnLeft");
+  const btnLeft  = document.getElementById("btnLeft");
   const btnRight = document.getElementById("btnRight");
-  const btnJump = document.getElementById("btnJump");
+  const btnJump  = document.getElementById("btnJump");
 
   bindHoldButton(btnLeft,  ()=> keys.left = true,  ()=> keys.left = false);
   bindHoldButton(btnRight, ()=> keys.right = true, ()=> keys.right = false);
@@ -309,7 +278,6 @@
     onJumpPressed();
   }, { passive:false });
 
-  // Prevent double-tap zoom (iOS)
   let lastTouchEnd = 0;
   document.addEventListener("touchend", (e) => {
     const now = Date.now();
@@ -338,11 +306,9 @@
   function reset() {
     running = false; gameOver = false; win = false;
     distance = 0;
-
     score = 0;
     round = 1;
     bannerT = 0;
-
     baseSpeed = 360;
     speed = baseSpeed;
 
@@ -354,7 +320,6 @@
     player.vy = 0;
     player.onGround = true;
     player.jumpsLeft = 2;
-    player.alive = true;
     player.crown = false;
 
     scheduleNextSpawn();
@@ -363,7 +328,6 @@
 
   function defeat(reason) {
     if (gameOver || win) return;
-    player.alive = false;
     gameOver = true;
     running = false;
     statusText.textContent = "Defeated: " + reason + " (Press Enter to restart)";
@@ -377,7 +341,6 @@
     statusText.textContent = "Final Victory 👑 (Press Enter to play again)";
   }
 
-  // Entities
   function spawn(type) {
     const e = {
       id: idSeq++,
@@ -386,7 +349,6 @@
       y: groundY,
       w: 64,
       h: 56,
-      vx: -speed,
       stomped: false,
     };
 
@@ -420,27 +382,20 @@
     nextSpawnIn = minGap + Math.random() * (maxGap - minGap);
   }
 
-  // Collision helpers
   function aabb(ax, ay, aw, ah, bx, by, bw, bh) {
     return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
   }
+
   function playerRect() {
-    return {
-      x: player.x + 8,
-      y: player.y - player.h + 6,
-      w: player.w - 16,
-      h: player.h - 10
-    };
+    return { x: player.x + 8, y: player.y - player.h + 6, w: player.w - 16, h: player.h - 10 };
   }
+
   function entityRect(e) {
-    return {
-      x: e.x + 6,
-      y: e.y - e.h + 6,
-      w: e.w - 12,
-      h: e.h - 10
-    };
+    return { x: e.x + 6, y: e.y - e.h + 6, w: e.w - 12, h: e.h - 10 };
   }
+
   function isFalling() { return player.vy > 180; }
+
   function stompFromAbove(e) {
     const pr = playerRect();
     const er = entityRect(e);
@@ -453,13 +408,9 @@
     score += pts;
 
     if (round === 1 && score > ROUND_TARGET[1]) {
-      round = 2;
-      bannerT = 2.0;
-      baseSpeed = 390;
+      round = 2; bannerT = 2.0; baseSpeed = 390;
     } else if (round === 2 && score > ROUND_TARGET[2]) {
-      round = 3;
-      bannerT = 2.0;
-      baseSpeed = 420;
+      round = 3; bannerT = 2.0; baseSpeed = 420;
     } else if (round === 3 && score > ROUND_TARGET[3]) {
       victory();
     }
@@ -468,26 +419,22 @@
   function update(dt) {
     if (!running || gameOver || win) return;
 
-    // Player horizontal move
     const dir = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
     if (dir !== 0) {
       player.x += dir * playerMoveSpeed * dt;
       player.x = Math.max(10, Math.min(W - player.w - 10, player.x));
     }
 
-    // Scroll speed
     distance += speed * dt;
     const roundRamp = (round === 1) ? 0 : (round === 2 ? 25 : 45);
     speed = Math.min(640, baseSpeed + distance / 70 + roundRamp);
 
-    // Spawn
     nextSpawnIn -= dt;
     if (nextSpawnIn <= 0) {
       spawn(chooseSpawn());
       scheduleNextSpawn();
     }
 
-    // Player physics
     if (!player.onGround) player.vy += gravity * dt;
     player.y += player.vy * dt;
 
@@ -500,72 +447,39 @@
       player.onGround = false;
     }
 
-    // Move entities
     for (let i = entities.length - 1; i >= 0; i--) {
       const e = entities[i];
-      e.vx = -speed;
-      e.x += e.vx * dt;
+      e.x += (-speed) * dt;
       if (e.x < -220) entities.splice(i, 1);
     }
 
     if (bannerT > 0) bannerT = Math.max(0, bannerT - dt);
 
-    // Collisions
     const pr = playerRect();
+
     for (let i = 0; i < entities.length; i++) {
       const e = entities[i];
       const er = entityRect(e);
+
       if (!aabb(pr.x, pr.y, pr.w, pr.h, er.x, er.y, er.w, er.h)) continue;
-      if (e.stomped) continue;
 
-      // Stomp
       if (stompFromAbove(e)) {
-        e.stomped = true;
-
         if (e.type === "tiger") {
           addScore(SCORE.tiger);
           player.vy = -BOUNCE.tiger;
           player.onGround = false;
           player.jumpsLeft = 1;
-          entities.splice(i, 1); // hunt tiger
+          entities.splice(i, 1);
           i--;
           continue;
         }
 
-        if (e.type === "lion") {
-          addScore(SCORE.lion);
-          player.vy = -BOUNCE.lion;
-          player.onGround = false;
-          player.jumpsLeft = 1;
-          continue;
-        }
-
-        if (e.type === "rabbit") {
-          addScore(SCORE.rabbit);
-          player.vy = -BOUNCE.rabbit;
-          player.onGround = false;
-          player.jumpsLeft = 1;
-          continue;
-        }
-
-        if (e.type === "bear") {
-          addScore(SCORE.bear);
-          player.vy = -BOUNCE.bear;
-          player.onGround = false;
-          player.jumpsLeft = 1;
-          continue;
-        }
-
-        if (e.type === "dino") {
-          addScore(SCORE.dino);
-          player.vy = -BOUNCE.dino;
-          player.onGround = false;
-          player.jumpsLeft = 1;
-          continue;
-        }
+        if (e.type === "lion")  { addScore(SCORE.lion);  player.vy = -BOUNCE.lion;  player.onGround = false; player.jumpsLeft = 1; continue; }
+        if (e.type === "rabbit"){ addScore(SCORE.rabbit);player.vy = -BOUNCE.rabbit;player.onGround = false; player.jumpsLeft = 1; continue; }
+        if (e.type === "bear")  { addScore(SCORE.bear);  player.vy = -BOUNCE.bear;  player.onGround = false; player.jumpsLeft = 1; continue; }
+        if (e.type === "dino")  { addScore(SCORE.dino);  player.vy = -BOUNCE.dino;  player.onGround = false; player.jumpsLeft = 1; continue; }
       }
 
-      // Side-hit lose (rabbit harmless)
       if (e.type === "rabbit") continue;
       if (e.type === "lion")  { defeat("lion caught you"); return; }
       if (e.type === "tiger") { defeat("tiger caught you"); return; }
@@ -574,7 +488,6 @@
     }
   }
 
-  // Drawing
   function drawBackground() {
     ctx.save();
     ctx.globalAlpha = 0.18;
@@ -655,6 +568,8 @@
 
   function drawHUD() {
     ctx.save();
+
+    // mini HUD
     ctx.fillStyle = "rgba(0,0,0,0.35)";
     ctx.fillRect(16, 16, 380, 132);
     ctx.strokeStyle = "rgba(255,255,255,0.10)";
@@ -671,25 +586,67 @@
     const extras =
       (round === 1) ? "R1: 🐇 🦁 🐅" :
       (round === 2) ? "R2: + 🐻 (faster)" :
-                     "R3: + 🦖 (faster)";
+                      "R3: + 🦖 (faster)";
     ctx.fillText(extras, 28, 106);
 
+    // START overlay
     if (!running && !gameOver && !win) {
-      ctx.fillStyle = "rgba(0,0,0,0.45)";
+      ctx.fillStyle = "rgba(0,0,0,0.55)";
       ctx.fillRect(0, 0, W, H);
 
       ctx.fillStyle = "rgba(215,255,231,0.98)";
       ctx.textAlign = "center";
-      ctx.font = "42px system-ui, Arial";
-      ctx.fillText("Jungle Runner", W / 2, H * 0.26);
+
+      ctx.font = "46px system-ui, Arial";
+      ctx.fillText("Jungle Runner", W / 2, H * 0.22);
 
       ctx.font = "18px system-ui, Arial";
-      ctx.fillText("Press Jump/Space to start", W / 2, H * 0.36);
-      ctx.fillText("Stomp from above to score and bounce. Tiger stomp hunts it.", W / 2, H * 0.41);
-      ctx.fillText("Move left/right to avoid side hits.", W / 2, H * 0.46);
+      ctx.fillText("동물을 점프해서 밟는 게임.", W / 2, H * 0.29);
+
+      const boxW = 760, boxH = 300;
+      const boxX = (W - boxW) / 2;
+      const boxY = H * 0.33;
+
+      ctx.fillStyle = "rgba(0,0,0,0.35)";
+      ctx.fillRect(boxX, boxY, boxW, boxH);
+      ctx.strokeStyle = "rgba(255,255,255,0.12)";
+      ctx.strokeRect(boxX, boxY, boxW, boxH);
+
+      ctx.fillStyle = "rgba(215,255,231,0.98)";
+      ctx.textAlign = "left";
+      ctx.font = "18px system-ui, Arial";
+
+      const lx = boxX + 26;
+      let ly = boxY + 38;
+      const lh = 28;
+
+      ctx.fillText("설명", lx, ly); ly += lh;
+      ctx.font = "16px system-ui, Arial";
+      ctx.fillText("• 토끼 🐇: 초식 동물이라 만나도 괜찮음.", lx, ly); ly += lh;
+      ctx.fillText("• 사자 🦁, 호랑이 🐅, 곰 🐻, 공룡 🦖: 만나면 게임 오버.", lx, ly); ly += lh;
+
+      ly += 10;
+      ctx.font = "18px system-ui, Arial";
+      ctx.fillText("밟았을 때 점수", lx, ly); ly += lh;
+      ctx.font = "16px system-ui, Arial";
+      ctx.fillText("• 토끼 🐇 +10   • 사자 🦁 +20", lx, ly); ly += lh;
+      ctx.fillText("• 곰 🐻 +30   • 공룡 🦖 +40", lx, ly); ly += lh;
+      ctx.fillText("• 호랑이 🐅 +50 (밟으면 제거)", lx, ly); ly += lh;
+
+      ly += 10;
+      ctx.font = "18px system-ui, Arial";
+      ctx.fillText("조작법", lx, ly); ly += lh;
+      ctx.font = "16px system-ui, Arial";
+      ctx.fillText("• 점프: 스페이스바 / 화면 버튼", lx, ly); ly += lh;
+      ctx.fillText("• 이동: 좌우 방향키 / 화면 버튼", lx, ly); ly += lh;
+
+      ctx.textAlign = "center";
+      ctx.font = "18px system-ui, Arial";
+      ctx.fillText("Press Space (or Jump) to start", W / 2, H * 0.92);
       ctx.textAlign = "left";
     }
 
+    // Round cleared overlay
     if (bannerT > 0) {
       ctx.fillStyle = "rgba(0,0,0,0.55)";
       ctx.fillRect(0, 0, W, H);
@@ -702,6 +659,7 @@
       ctx.textAlign = "left";
     }
 
+    // Game over overlay
     if (gameOver) {
       ctx.fillStyle = "rgba(0,0,0,0.55)";
       ctx.fillRect(0, 0, W, H);
@@ -714,6 +672,7 @@
       ctx.textAlign = "left";
     }
 
+    // Win overlay
     if (win) {
       ctx.fillStyle = "rgba(0,0,0,0.55)";
       ctx.fillRect(0, 0, W, H);
@@ -730,7 +689,6 @@
   }
 
   function render() {
-    // Clear in logical coordinates (transform already set)
     ctx.clearRect(0, 0, W, H);
     drawBackground();
     for (const e of entities) drawEntity(e);
