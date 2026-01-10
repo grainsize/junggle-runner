@@ -1,8 +1,8 @@
 {
+  "id": "/jungle-runner/",
   "name": "Jungle Runner",
   "short_name": "Jungle",
   "start_url": "/jungle-runner/",
-  "scope": "/jungle-runner/",
   "display": "standalone",
   "background_color": "#0b1b12",
   "theme_color": "#0b1b12",
